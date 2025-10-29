@@ -1,0 +1,43 @@
+pipeline {
+    agent any
+
+    tools {
+        maven 'M3.9'
+    }
+
+    stages {
+
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Build with Maven') {
+            steps {
+                bat 'mvn -B -DskipTests clean package'
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    bat "docker build -t <username>/demo:latest . "
+		            bat "docker run <username>/demo:latest"
+                }
+            }
+        }
+
+        stage('Push to Docker Hub') {
+            steps {
+                script {
+                    bat '''
+                    docker login -u <username> -p <token_access>
+                    docker push <username>/demo:latest
+                    docker logout
+                    '''
+                }
+            }
+        }
+    }
+}
